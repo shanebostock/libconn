@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <thread>
+#include <ifaddrs.h>
 
 #define MAXBUFLEN 64
 #define MYPORT "4750"
@@ -28,8 +29,8 @@ typedef enum conn_type {
 
 typedef struct connection_parameters {
     conn_type_e type = NUM_CONN_TYPES_E;
-    char port[64];
-    char node[64];
+    char port[64] = {'\0'};
+    char node[64] = {'\0'};
 } conn_param_s;
 
 
@@ -64,6 +65,7 @@ private:
 	void start_client();
 	status_e conneciton_handler(int newfd, struct sockaddr_storage their_addr);
 	void* get_in_addr(struct sockaddr *sa);
+	void get_ip_addr();
 	status_e open_connection(int &sockfd, struct addrinfo &ret, const conn_param_s &params);
 	status_e listen_for_connection(int &sockfd, const conn_param_s &params);
 

@@ -5,7 +5,17 @@
 Connection::Connection(const conn_param_s &params){
 	
     m_params = params;
-
+    if(m_params.port[0] == '\0'){
+        printf("Port is null using default value %d\n", atoi(MYPORT));
+        long unsigned int ret = snprintf(m_params.port,sizeof(m_params.port),"%s",MYPORT);
+        if(ret > sizeof(m_params.port)){
+            printf("Truncated\n");
+        }
+    }
+    if(m_params.node[0] == '\0'){
+        printf("Node is null getting Server IP\n");
+        get_ip_addr();
+    }
 
 }
 
@@ -25,7 +35,7 @@ status_e Connection::startconnection(){
 */
     if (m_params.type == CONN_TYPE_SERVER_E){
         printf("I am a server.\n");
-        printf("Listening on port: %s.\n", m_params.port);
+        printf("Listening on port: %s\n", m_params.port);
         printf("My IP is: %s\n", m_params.node);
         start_server();
     }
@@ -61,7 +71,7 @@ void Connection::start_server(){
         newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
         if(newfd == -1){
             perror("accept");
-            continue;
+            exit(0);
         }
         
         inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
@@ -143,6 +153,89 @@ void Connection::start_client(){
     printf("host: Terminating Program.\n");
     close(sockfd);
 
+}
+
+void Connection::get_ip_addr(){
+
+
+    FILE *f;
+    char line[100] , *p , *c;
+    
+    f = fopen("/proc/net/route" , "r");
+    
+    while(fgets(line , 100 , f))
+    {
+        p = strtok(line , " \t");
+        c = strtok(NULL , " \t");
+        
+        if(p!=NULL && c!=NULL)
+        {
+            if(strcmp(c , "00000000") == 0)
+            {
+                //printf("Default interface is : %s \n" , p);
+                break;
+            }
+        }
+    }
+    
+    //which family do we require , AF_INET or AF_INET6
+    int fm = AF_INET;
+    struct ifaddrs *ifaddr, *ifa;
+    int family , s;
+    char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1) 
+    {
+        perror("getifaddrs");
+        exit(EXIT_FAILURE);
+    }
+
+    //Walk through linked list, maintaining head pointer so we can free list later
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) 
+    {
+        if (ifa->ifa_addr == NULL)
+        {
+            continue;
+        }
+
+        family = ifa->ifa_addr->sa_family;
+
+        if(strcmp( ifa->ifa_name , p) == 0)
+        {
+            if (family == fm) 
+            {
+                s = getnameinfo( ifa->ifa_addr, (family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6) , host , NI_MAXHOST , NULL , 0 , NI_NUMERICHOST);
+                
+                if (s != 0) 
+                {
+                    printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                    exit(EXIT_FAILURE);
+                }
+                
+                //printf("address: %s\n", host);
+                long unsigned int ret = snprintf(m_params.node,sizeof(m_params.node),"%s",host);
+                if ( ret > sizeof(m_params.node)){
+                    printf("Truncated snprintf()");
+                    exit(0);
+                }
+            }
+            //printf("\n");
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    
+    //return 0;
+
+/*    struct sockaddr_in* pV4Addr = (struct sockaddr_in*)&inet_addr;
+    struct in_addr ipAddr = pV4Addr->sin_addr;
+
+    //If you then want the ip address as a string then do the following:
+
+    
+    inet_ntop( AF_INET, &ipAddr, m_params.node, INET_ADDRSTRLEN );
+    printf("IP Address is %s\n" ,m_params.node);
+*/
 }
 
 void* Connection::get_in_addr(struct sockaddr *sa){

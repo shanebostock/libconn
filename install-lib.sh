@@ -15,7 +15,7 @@ sudo cp $LIBCONN_PATH/*.h $INCLUDES_PATH
 sudo cp libconn.so $LIBS_PATH
 
 echo setting up linker for libcon
-sudo cp $LIBCONN_PATH/libconn.conf $CONF_PATH
+sudo cp libconn.conf $CONF_PATH
 sudo ldconfig
 
 echo cleaning up...
