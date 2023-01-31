@@ -19,6 +19,7 @@
 
 #define MAXBUFLEN 64
 #define MYPORT "4750"
+#define BACKLOG 10
 
 typedef enum conn_type {
 	CONN_TYPE_SERVER_E = 0,
