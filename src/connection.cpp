@@ -5,16 +5,16 @@
 Connection::Connection(const conn_param_s &params){
 	
     m_params = params;
-    if(m_params.port[0] == '\0'){
+    if(m_params.my_port[0] == '\0'){
         printf("Port is null using default value %d\n", atoi(MYPORT));
-        long unsigned int ret = snprintf(m_params.port,sizeof(m_params.port),"%s",MYPORT);
-        if(ret > sizeof(m_params.port)){
+        long unsigned int ret = snprintf(m_params.port,sizeof(m_params.my_port),"%s",MYPORT);
+        if(ret > sizeof(m_params.my_port)){
             printf("Truncated\n");
         }
-    }
-    if(m_params.node[0] == '\0'){
-        printf("Node is null getting Server IP\n");
-        get_ip_addr();
+    } 
+    if(m_params.my_node[0] == '\0'){
+        printf("Node is null getting My Local IP\n");
+        set_my_node();
     }
 
 }
@@ -35,8 +35,8 @@ status_e Connection::startconnection(){
 */
     if (m_params.type == CONN_TYPE_SERVER_E){
         printf("I am a server.\n");
-        printf("Listening on port: %s\n", m_params.port);
-        printf("My IP is: %s\n", m_params.node);
+        printf("Listening on port: %s\n", m_params.my_port);
+        printf("My IP is: %s\n", m_params.my_node);
         start_server();
     }
     else if (m_params.type == CONN_TYPE_CLIENT_E){
@@ -54,6 +54,7 @@ status_e Connection::startconnection(){
 
 
 /* Private */
+// Core Business Function Methods
 void Connection::start_server(){
 
     int sockfd, newfd;
@@ -70,7 +71,7 @@ void Connection::start_server(){
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, m_params.port, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(m_params.node, m_params.port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(0);
     }
@@ -136,36 +137,68 @@ void Connection::start_server(){
     }
 }
 
-status_e Connection::conneciton_handler(int newfd, struct sockaddr_storage their_addr){
-    char buf[MAXBUFLEN];
-    int numbytes;
-    socklen_t sin_size;
-    sin_size = sizeof their_addr;
-    char s[INET_ADDRSTRLEN];
-
-    while(1){
-        if ((numbytes = recvfrom(newfd, buf, MAXBUFLEN-1 , 0, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
-            perror("recvfrom");
-            return STATUS_FAIL_E;
-        }
-        
-        buf[numbytes-1] = '\0'; // sendto() adds '\n' replace with '\0'
-        printf("recvd packet from %s\n",
-        inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s));
-        printf("recvd packet is %d bytes long\n", numbytes);
-        printf("recvd packet contains %s\n", buf);
-        if (strcmp("End", buf) == 0 || strcmp("end", buf) == 0){
-            break;
-        }
-    }
-
-    memset(&buf, 0, MAXBUFLEN);
-    close(newfd);
-    return STATUS_OK_E;
-}
-
 void Connection::start_client(){
 
+    int sockfd, numbytes;  
+    char buf[MAXDATASIZE];
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
+    char s[INET6_ADDRSTRLEN];
+
+    // if (argc != 2) {
+    //     fprintf(stderr,"usage: client hostname\n");
+    //     exit(1);
+    // }
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((rv = getaddrinfo(m_params.node, m_params.port, &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        exit(0);
+    }
+
+    // loop through all the results and connect to the first we can
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                p->ai_protocol)) == -1) {
+            perror("client: socket");
+            continue;
+        }
+
+        if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(sockfd);
+            perror("client: connect");
+            continue;
+        }
+
+        break;
+    }
+
+    if (p == NULL) {
+        fprintf(stderr, "client: failed to connect\n");
+        exit(0);
+    }
+
+    inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
+            s, sizeof s);
+    printf("client: connecting to %s\n", s);
+
+    freeaddrinfo(servinfo); // all done with this structure
+
+    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+        perror("recv");
+        exit(1);
+    }
+
+    buf[numbytes] = '\0';
+
+    printf("client: received '%s'\n",buf);
+
+    close(sockfd);
+
+#if 0
     int sockfd;
     struct addrinfo ret;
     int numbytes;
@@ -192,10 +225,11 @@ void Connection::start_client(){
     
     printf("host: Terminating Program.\n");
     close(sockfd);
-
+#endif
 }
 
-void Connection::get_ip_addr(){
+// Helper methods
+void Connection::set_my_node(){
 
 
     FILE *f;
@@ -253,8 +287,8 @@ void Connection::get_ip_addr(){
                 }
                 
                 //printf("address: %s\n", host);
-                long unsigned int ret = snprintf(m_params.node,sizeof(m_params.node),"%s",host);
-                if ( ret > sizeof(m_params.node)){
+                long unsigned int ret = snprintf(m_params.my_node,sizeof(m_params.my_node),"%s",host);
+                if ( ret > sizeof(m_params.my_node)){
                     printf("Truncated snprintf()");
                     exit(0);
                 }
@@ -287,6 +321,34 @@ void* Connection::get_in_addr(struct sockaddr *sa){
 
 }
 
+// Abstraction Methods (Broken)
+status_e Connection::conneciton_handler(int newfd, struct sockaddr_storage their_addr){
+    char buf[MAXBUFLEN];
+    int numbytes;
+    socklen_t sin_size;
+    sin_size = sizeof their_addr;
+    char s[INET_ADDRSTRLEN];
+
+    while(1){
+        if ((numbytes = recvfrom(newfd, buf, MAXBUFLEN-1 , 0, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
+            perror("recvfrom");
+            return STATUS_FAIL_E;
+        }
+        
+        buf[numbytes-1] = '\0'; // sendto() adds '\n' replace with '\0'
+        printf("recvd packet from %s\n",
+        inet_ntop(their_addr.ss_family,get_in_addr((struct sockaddr *)&their_addr),s, sizeof s));
+        printf("recvd packet is %d bytes long\n", numbytes);
+        printf("recvd packet contains %s\n", buf);
+        if (strcmp("End", buf) == 0 || strcmp("end", buf) == 0){
+            break;
+        }
+    }
+
+    memset(&buf, 0, MAXBUFLEN);
+    close(newfd);
+    return STATUS_OK_E;
+}
 status_e Connection::open_connection(int &sockfd, struct addrinfo &ret, const conn_param_s &params){
     struct addrinfo hints, *servinfo, *p;
     int rv;

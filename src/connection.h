@@ -18,6 +18,7 @@
 #include <ifaddrs.h>
 
 #define MAXBUFLEN 64
+#define MAXDATASIZE 100
 #define MYPORT "4750"
 #define BACKLOG 10
 
@@ -30,8 +31,10 @@ typedef enum conn_type {
 
 typedef struct connection_parameters {
     conn_type_e type = NUM_CONN_TYPES_E;
-    char port[64] = {'\0'};
-    char node[64] = {'\0'};
+    char port[64] = {'\0'}; // port to connect to
+    char node[64] = {'\0'}; // ipv4 to connect to
+    char my_port[64] = {'\0'}; // my port to listen on
+    char my_node[64] = {'\0'}; // my ipv4 to listen on
 } conn_param_s;
 
 
@@ -66,7 +69,7 @@ private:
 	void start_client();
 	status_e conneciton_handler(int newfd, struct sockaddr_storage their_addr);
 	void* get_in_addr(struct sockaddr *sa);
-	void get_ip_addr();
+	void set_my_node();
 	status_e open_connection(int &sockfd, struct addrinfo &ret, const conn_param_s &params);
 	status_e listen_for_connection(int &sockfd, const conn_param_s &params);
 
