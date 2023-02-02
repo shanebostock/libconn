@@ -30,8 +30,9 @@ Connection::~Connection(){}
 status_e Connection::startconnection(){
 /*  
     the difference between client and server is the starting state. 
-    the server server starts by listening for connections.
+    the server starts by listening for connections.
     the client starts by initializing connections.
+    once either is operational it creates the other for full duplex comms.
 */
     if (m_params.type == CONN_TYPE_SERVER_E){
         printf("I am a server.\n");
@@ -67,8 +68,8 @@ void Connection::start_server(){
 
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_INET; //Options are AF_INET (ipv4) AF_INET6 (ipv6) or AF_UNSPEC (either ipv4 or ipv6)
+    hints.ai_socktype = SOCK_DGRAM; // Options are SOCK_DGRAM or SOCK_STREAM
     hints.ai_flags = AI_PASSIVE; // use my IP
 
     if ((rv = getaddrinfo(m_params.node, m_params.port, &hints, &servinfo)) != 0) {
