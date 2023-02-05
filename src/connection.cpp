@@ -1,19 +1,18 @@
 #include "connection.h"
 
-
 /* Public */
 Connection::Connection(const conn_param_s &params){
 	
     m_params = params;
     if(m_params.my_port[0] == '\0'){
-        printf("Port is null using default value %d\n", atoi(MYPORT));
-        long unsigned int ret = snprintf(m_params.port,sizeof(m_params.my_port),"%s",MYPORT);
+        // printf("Port is null using default value %d\n", atoi(MYPORT));
+        long unsigned int ret = snprintf(m_params.my_port,sizeof(m_params.my_port),"%s",MYPORT);
         if(ret > sizeof(m_params.my_port)){
             printf("Truncated\n");
         }
     } 
     if(m_params.my_node[0] == '\0'){
-        printf("Node is null getting My Local IP\n");
+        // printf("Node is null getting My Local IP\n");
         set_my_node();
     }
 
@@ -72,7 +71,7 @@ void Connection::start_server(){
     hints.ai_socktype = SOCK_DGRAM; // Options are SOCK_DGRAM or SOCK_STREAM
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(m_params.node, m_params.port, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, m_params.my_port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(0);
     }
