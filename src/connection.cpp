@@ -322,6 +322,22 @@ void* Connection::get_in_addr(struct sockaddr *sa){
 }
 
 // Abstraction Methods (Broken)
+int my_accept(){
+  /*
+    Going to need to write my own version of accept that allows for multiple connections accross
+    a variety of connection types. 
+
+    It will return a new socket for the incoming connection.
+
+    I would like this to work such that I can use the bind, listen, accept logic for a new connecion.
+    New connections will be able to connect to whatever they want to.
+
+
+  */
+
+
+
+}
 status_e Connection::conneciton_handler(int newfd, struct sockaddr_storage their_addr){
     char buf[MAXBUFLEN];
     int numbytes;
