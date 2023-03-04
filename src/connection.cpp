@@ -336,7 +336,7 @@ int my_accept(){
   */
 
 
-
+    return 0;
 }
 status_e Connection::conneciton_handler(int newfd, struct sockaddr_storage their_addr){
     char buf[MAXBUFLEN];
