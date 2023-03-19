@@ -57,14 +57,13 @@ status_e Connection::startconnection(){
 // Core Business Function Methods
 void Connection::start_server(){
 
-    int sockfd, newfd;
+    int sockfd;
     struct sockaddr_storage their_addr;
     struct addrinfo hints, *servinfo, *p;
-    socklen_t sin_size;
+    socklen_t addr_len;
     char s[INET_ADDRSTRLEN];
-    int yes=1;
     int rv;
-
+    int numbytes = 0;
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; //Options are AF_INET (ipv4) AF_INET6 (ipv6) or AF_UNSPEC (either ipv4 or ipv6)
@@ -84,12 +83,6 @@ void Connection::start_server(){
             continue;
         }
 
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                sizeof(int)) == -1) {
-            perror("setsockopt");
-            exit(1);
-        }
-
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
             close(sockfd);
             perror("server: bind");
@@ -106,35 +99,28 @@ void Connection::start_server(){
         exit(1);
     }
 
-    if (listen(sockfd, BACKLOG) == -1) {
-        perror("listen");
-        exit(1);
-    }
-
     printf("server: waiting for connections...\n");
 
     while(1) {  // main accept() loop
-        sin_size = sizeof their_addr;
-        newfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-        if (newfd == -1) {
-            perror("accept");
-            continue;
+        addr_len = sizeof their_addr;
+        if((numbytes = recvfrom(sockfd, m_buf, MAXBUFLEN-1, 0 , (struct sockaddr*)&their_addr, &addr_len)) == -1){
+            perror("recvfrom");
+            exit(1);
         }
 
-        inet_ntop(their_addr.ss_family,
-            get_in_addr((struct sockaddr *)&their_addr),
-            s, sizeof s);
-        printf("server: got connection from %s\n", s);
+        inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
+        printf("server: got packet from: %s\n", s);
+        m_buf[numbytes] = '\0'; // set last index to null char.
+        printf("server: packet contains: %s\n",m_buf);
 
-        if (!fork()) { // this is the child process
-            close(sockfd); // child doesn't need the listener
-            if (send(newfd, "Hello, world!", 13, 0) == -1)
-                perror("send");
-            close(newfd);
-            exit(0);
-        }
-        close(newfd);  // parent doesn't need this
+        //
+        break;
+        //
+
     }
+
+    close(sockfd);
+    
 }
 
 void Connection::start_client(){
@@ -151,8 +137,8 @@ void Connection::start_client(){
     // }
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
 
     if ((rv = getaddrinfo(m_params.node, m_params.port, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -185,16 +171,27 @@ void Connection::start_client(){
             s, sizeof s);
     printf("client: connecting to %s\n", s);
 
-    freeaddrinfo(servinfo); // all done with this structure
+    
 
-    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-        perror("recv");
+    printf("Message to Send: ");
+    fgets (buf, MAXBUFLEN, stdin);
+
+    if ((numbytes = sendto(sockfd, buf, MAXBUFLEN-1, 0, p->ai_addr, p->ai_addrlen)) == -1) {
+        perror("client: sendto");
         exit(1);
     }
+    
+    freeaddrinfo(servinfo); // all done with this structure
+    
+    // addr_len = sizeof their_addr;
+    // if((numbytes = recvfrom(sockfd, m_buf, MAXBUFLEN-1, 0 , (struct sockaddr*)&their_addr, &addr_len)) == -1){
+    //     perror("recvfrom");
+    //     exit(1);
+    // }
 
-    buf[numbytes] = '\0';
+    // buf[numbytes] = '\0';
 
-    printf("client: received '%s'\n",buf);
+    // printf("client: received '%s'\n",buf);
 
     close(sockfd);
 

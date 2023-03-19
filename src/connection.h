@@ -17,7 +17,7 @@
 #include <thread>
 #include <ifaddrs.h>
 
-#define MAXBUFLEN 64
+#define MAXBUFLEN 1024
 #define MAXDATASIZE 100
 #define MYPORT "4750"
 #define BACKLOG 10
