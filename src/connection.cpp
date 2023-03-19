@@ -126,7 +126,7 @@ void Connection::start_server(){
 void Connection::start_client(){
 
     int sockfd, numbytes;  
-    char buf[MAXDATASIZE];
+    char buf[MAXBUFLEN];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
