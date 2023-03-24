@@ -18,7 +18,6 @@
 #include <ifaddrs.h>
 
 #define MAXBUFLEN 1024
-#define MAXDATASIZE 100
 #define MYPORT "4750"
 #define BACKLOG 10
 
@@ -44,35 +43,20 @@ private:
 
 	int m_sockfd = 0;
 	conn_param_s m_params;
-	std::thread mt_recv;
-	std::thread mt_send;
+	std::thread mt_listener;
+	std::thread mt_talker;
 	std::thread mt_mngr;
 	char m_buf[MAXBUFLEN];
+	struct addrinfo *m_servinfo, *m_p;
 
     /* Should be 3 threads in the Connection. Send Thread. Rec Thread. Manager Thread. */
-	#if 0
-	
-	struct addrinfo hints, *servinfo, *p;
-	void *get_in_addr(struct sockaddr *sa);
-	status_e initiate_connection(int &sockfd, struct addrinfo &ret, const char *node);
-	status_e open_connection(int &sockfd);
-
-	int numbytes;
-	struct sockaddr_storage their_addr;
-    char buf[MAXBUFLEN];
-    socklen_t addr_len;
-    char s[INET_ADDRSTRLEN];
-	
-	#endif
 
 	void start_server();
 	void start_client();
-	status_e conneciton_handler(int newfd, struct sockaddr_storage their_addr);
 	void* get_in_addr(struct sockaddr *sa);
-	void set_my_node();
-	status_e open_connection(int &sockfd, struct addrinfo &ret, const conn_param_s &params);
-	status_e listen_for_connection(int &sockfd, const conn_param_s &params);
-
+	void receiver();
+	void sender();
+	
 public:
 
 	Connection(const conn_param_s &params);
@@ -81,28 +65,7 @@ public:
 	
 	status_e startconnection();
 
-/*
-	status_e listen();
-	status_e accept();
-	status_e send();
-	status_e recv();
-	status_e connect();
-*/
-
 };
 
 #endif /* CONNECTION_H */
 
-/*
-	New connection Server or Client
-	if Server:
-		get socket
-		listen for connections on port
-			If connection:
-				launch connection handler in child process
-				go back to listening on port
-	if Client
-		get socket
-		open connection to ip:port
-
-*/
