@@ -18,12 +18,12 @@
 #include <ifaddrs.h>
 
 #define MAXBUFLEN 1024
-#define MYPORT "4750"
-#define BACKLOG 10
+#define PORT "4750"
+#define IP "10.0.0.181"
 
 typedef enum conn_type {
-	CONN_TYPE_SERVER_E = 0,
-	CONN_TYPE_CLIENT_E,
+	CONN_TYPE_RECEIVER_E = 0,
+	CONN_TYPE_SENDER_E,
 	/* LAST */
 	NUM_CONN_TYPES_E
 } conn_type_e;
@@ -32,8 +32,6 @@ typedef struct connection_parameters {
     conn_type_e type = NUM_CONN_TYPES_E;
     char port[64] = {'\0'}; // port to connect to
     char node[64] = {'\0'}; // ipv4 to connect to
-    char my_port[64] = {'\0'}; // my port to listen on
-    char my_node[64] = {'\0'}; // my ipv4 to listen on
 } conn_param_s;
 
 
@@ -43,9 +41,6 @@ private:
 
 	int m_sockfd = 0;
 	conn_param_s m_params;
-	std::thread mt_listener;
-	std::thread mt_talker;
-	std::thread mt_mngr;
 	char m_buf[MAXBUFLEN];
 	struct addrinfo *m_servinfo, *m_p;
 
@@ -55,7 +50,7 @@ private:
 	void start_client();
 	void* get_in_addr(struct sockaddr *sa);
 	void receiver();
-	void sender();
+	void m_sender();
 	
 public:
 
@@ -64,6 +59,8 @@ public:
 	~Connection();
 	
 	status_e startconnection();
+	void sender();
+	void sender(char* msgbuf);
 
 };
 

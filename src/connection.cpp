@@ -4,16 +4,17 @@
 Connection::Connection(const conn_param_s &params){
 	
     m_params = params;
-    if(m_params.my_port[0] == '\0'){
-        // printf("Port is null using default value %d\n", atoi(MYPORT));
-        long unsigned int ret = snprintf(m_params.my_port,sizeof(m_params.my_port),"%s",MYPORT);
+    if(m_params.port[0] == '\0'){
+        // printf("Port is null using default value %d\n", atoi(PORT));
+        long unsigned int ret = snprintf(m_params.port,sizeof(m_params.port),"%s",PORT);
         if(ret > sizeof(m_params.my_port)){
             printf("Truncated\n");
         }
     } 
-    if(m_params.my_node[0] == '\0'){
+    if(m_params.node[0] == '\0'){
+        // do nothing for now
         // printf("Node is null getting My Local IP\n");
-        set_my_node();
+        // set_my_node();
     }
 
     startconnection();
@@ -27,6 +28,7 @@ Connection::Connection(const Connection &con){
 }
 
 Connection::~Connection(){
+    
     close(m_sockfd);
     freeaddrinfo(m_servinfo);
 
@@ -34,14 +36,14 @@ Connection::~Connection(){
 
 status_e Connection::startconnection(){
 
-    if (m_params.type == CONN_TYPE_SERVER_E){
-        printf("I am a server.\n");
-        printf("Listening on port: %s\n", m_params.my_port);
-        printf("My IP is: %s\n", m_params.my_node);
+    if (m_params.type == CONN_TYPE_RECEIVER_E){
+        printf("I am a recevier.\n");
+        printf("Listening on port: %s\n", m_params.port);
+        // printf("My IP is: %s\n", m_params.node);
         start_server();
     }
-    else if (m_params.type == CONN_TYPE_CLIENT_E){
-        printf("I am a client.\n"); 
+    else if (m_params.type == CONN_TYPE_SENDER_E){
+        printf("I am a sender.\n"); 
         printf("Connecting to port: %s.\n", m_params.port);
         printf("At IP: %s\n", m_params.node);
         start_client();
@@ -67,7 +69,7 @@ If you are sending you are a client.
 
 void Connection::start_server(){
 
-    int numbytes;
+    //int numbytes;
     struct addrinfo hints;
 
     int rv;
@@ -77,13 +79,13 @@ void Connection::start_server(){
     hints.ai_socktype = SOCK_DGRAM; // Options are SOCK_DGRAM or SOCK_STREAM
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, m_params.my_port, &hints, &m_servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, m_params.port, &hints, &m_servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(0);
     }
 
     // loop through all the results and bind to the first we can
-    for(m_p = servinfo; m_p != NULL; m_p = m_p->ai_next) {
+    for(m_p = m_servinfo; m_p != NULL; m_p = m_p->ai_next) {
         if ((m_sockfd = socket(m_p->ai_family, m_p->ai_socktype,
                 m_p->ai_protocol)) == -1) {
             perror("server: socket");
@@ -112,8 +114,7 @@ void Connection::start_server(){
 
 void Connection::start_client(){
 
-    int numbytes;  
-    char buf[MAXBUFLEN];
+    //int numbytes;  
     struct addrinfo hints;
     int rv;
     char s[INET6_ADDRSTRLEN];
@@ -128,8 +129,8 @@ void Connection::start_client(){
     }
 
     // loop through all the results and connect to the first we can
-    for(m_p = servinfo; m_p != NULL; m_p = m_p->ai_next) {
-        if ((m_sockfd = socket(p->ai_family, m_p->ai_socktype,
+    for(m_p = m_servinfo; m_p != NULL; m_p = m_p->ai_next) {
+        if ((m_sockfd = socket(m_p->ai_family, m_p->ai_socktype,
                 m_p->ai_protocol)) == -1) {
             perror("client: socket");
             continue;
@@ -149,15 +150,13 @@ void Connection::start_client(){
         exit(0);
     }
 
-    inet_ntop(m_p->ai_family, get_in_addr((struct sockaddr *)m_p->ai_addr),
-            s, sizeof s);
+    inet_ntop(m_p->ai_family, get_in_addr((struct sockaddr *)m_p->ai_addr), s, sizeof s);
     printf("client: connecting to %s\n", s);
     
-     // all done with this structure
 }
 
 void Connection::receiver(){
-
+    int numbytes;
     socklen_t addr_len;
     char s[INET_ADDRSTRLEN];
     struct sockaddr_storage their_addr;
@@ -186,10 +185,20 @@ void Connection::receiver(){
 
 void Connection::sender(){
 
+    int numbytes;
     printf("Message to Send: ");
-    fgets (buf, MAXBUFLEN, stdin);
+    fgets (m_buf, MAXBUFLEN, stdin);
 
-    if ((numbytes = sendto(m_sockfd, buf, MAXBUFLEN-1, 0, m_p->ai_addr, m_p->ai_addrlen)) == -1) {
+    if ((numbytes = sendto(m_sockfd, m_buf, MAXBUFLEN-1, 0, m_p->ai_addr, m_p->ai_addrlen)) == -1) {
+        perror("client: sendto");
+        exit(1);
+    }
+}
+
+void Connection::sender(char* msgbuf){
+
+    int numbytes;
+    if ((numbytes = sendto(m_sockfd, msgbuf, MAXBUFLEN-1, 0, m_p->ai_addr, m_p->ai_addrlen)) == -1) {
         perror("client: sendto");
         exit(1);
     }
