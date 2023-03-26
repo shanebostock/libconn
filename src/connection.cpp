@@ -7,7 +7,7 @@ Connection::Connection(const conn_param_s &params){
     if(m_params.port[0] == '\0'){
         // printf("Port is null using default value %d\n", atoi(PORT));
         long unsigned int ret = snprintf(m_params.port,sizeof(m_params.port),"%s",PORT);
-        if(ret > sizeof(m_params.my_port)){
+        if(ret > sizeof(m_params.port)){
             printf("Truncated\n");
         }
     } 
