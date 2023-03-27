@@ -4,6 +4,6 @@
 
 echo Compiling Test
 
-g++ -Wall -Werror test.cpp -o test -lconn  
+g++ -Wall -Werror test.cpp -o test -lconn -pthread
 
 echo complete
