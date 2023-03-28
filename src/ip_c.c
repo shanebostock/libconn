@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h> /* for strncpy */
-
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -9,26 +9,58 @@
 #include <net/if.h>
 #include <arpa/inet.h>
 
-int
-main()
+#if 1
+
+void other_test(void)
 {
- int fd;
- struct ifreq ifr;
+    char          buf[1024];
+    struct ifconf ifc;
+    struct ifreq *ifr;
+    int           sck;
+    int           nInterfaces;
+    int           i;
 
- fd = socket(AF_INET, SOCK_DGRAM, 0);
+/* Get a socket handle. */
+    sck = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sck < 0)
+    {
+        perror("socket");
+        exit(1);
+    }
 
- /* I want to get an IPv4 IP address */
- ifr.ifr_addr.sa_family = AF_INET;
+/* Query available interfaces. */
+    ifc.ifc_len = sizeof(buf);
+    ifc.ifc_buf = buf;
+    if(ioctl(sck, SIOCGIFCONF, &ifc) < 0)
+    {
+        perror("ioctl(SIOCGIFCONF)");
+        exit(1);
+    }
 
- /* I want IP address attached to "eth0" */
- strncpy(ifr.ifr_name, "ens33", IFNAMSIZ-1);
+/* Iterate through the list of interfaces. */
+    ifr         = ifc.ifc_req;
+    nInterfaces = ifc.ifc_len / sizeof(struct ifreq);
+    for(i = 0; i < nInterfaces; i++)
+    {
+        struct ifreq *item = &ifr[i];
 
- ioctl(fd, SIOCGIFADDR, &ifr);
+    /* Show the device name and IP address */
+        printf("%s: IP %s",
+               item->ifr_name,
+               inet_ntoa(((struct sockaddr_in *)&item->ifr_addr)->sin_addr));
 
- close(fd);
 
- /* display result */
- printf("%s\n", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+    /* Get the broadcast address */
+        if(ioctl(sck, SIOCGIFBRDADDR, item) >= 0)
+            printf(", BROADCAST %s", inet_ntoa(((struct sockaddr_in *)&item->ifr_broadaddr)->sin_addr));
+        printf("\n");
+    }
 
+}
+#endif
+
+int main(void)
+{
+ other_test();
  return 0;
 }
