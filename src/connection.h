@@ -49,6 +49,7 @@ private:
 	void start_server();
 	void start_client();
 	void* get_in_addr(struct sockaddr *sa);
+	get_iface_addr(void);
 	void receiver();
 	void m_sender();
 	

@@ -55,18 +55,6 @@ status_e Connection::startconnection(){
     return STATUS_OK_E;
 }
 
-
-/* Private */
-// Core Business Function Method
-/*
-
-The difference between a sever and client is their starting state: waiting for a message or sending a message.
-If you are waiting you are a sender. 
-If you are sending you are a client.  
-
-*/
-
-
 void Connection::start_server(){
 
     //int numbytes;
@@ -211,4 +199,45 @@ void* Connection::get_in_addr(struct sockaddr *sa){
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+void Connection::get_iface_addr(void){
+    char          buf[1024];
+    struct ifconf ifc;
+    struct ifreq *ifr;
+    int           sck;
+    int           nInterfaces;
+    int           i;
+
+
+    sck = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sck < 0)
+    {
+        perror("socket");
+        exit(1);
+    }
+
+    ifc.ifc_len = sizeof(buf);
+    ifc.ifc_buf = buf;
+    if(ioctl(sck, SIOCGIFCONF, &ifc) < 0)
+    {
+        perror("ioctl(SIOCGIFCONF)");
+        exit(1);
+    }
+
+    ifr         = ifc.ifc_req;
+    nInterfaces = ifc.ifc_len / sizeof(struct ifreq);
+    for(i = 0; i < nInterfaces; i++)
+    {
+        struct ifreq *item = &ifr[i];
+
+        printf("%s: IP %s",
+               item->ifr_name,
+               inet_ntoa(((struct sockaddr_in *)&item->ifr_addr)->sin_addr));
+
+        // if(ioctl(sck, SIOCGIFBRDADDR, item) >= 0)
+        //     printf(", BROADCAST %s", inet_ntoa(((struct sockaddr_in *)&item->ifr_broadaddr)->sin_addr));
+        // printf("\n");
+    }
+
 }
