@@ -3,7 +3,6 @@
 #Compiling Test
 
 echo Compiling Test
-
-g++ -Wall -Werror test.cpp -o test -lconn -pthread
+g++ -Wall -Werror test.cpp -lrt -pthread -lconn -o test
 
 echo complete

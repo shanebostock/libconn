@@ -200,7 +200,7 @@ void* Connection::get_in_addr(struct sockaddr *sa){
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
-
+/*
 void Connection::get_iface_addr(void){
     char          buf[1024];
     struct ifconf ifc;
@@ -234,10 +234,8 @@ void Connection::get_iface_addr(void){
         printf("%s: IP %s",
                item->ifr_name,
                inet_ntoa(((struct sockaddr_in *)&item->ifr_addr)->sin_addr));
-
-        // if(ioctl(sck, SIOCGIFBRDADDR, item) >= 0)
-        //     printf(", BROADCAST %s", inet_ntoa(((struct sockaddr_in *)&item->ifr_broadaddr)->sin_addr));
-        // printf("\n");
     }
 
 }
+
+*/

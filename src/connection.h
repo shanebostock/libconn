@@ -16,6 +16,10 @@
 #include <netdb.h>
 #include <thread>
 #include <ifaddrs.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 
 #define MAXBUFLEN 1024
 #define PORT "4750"
@@ -35,6 +39,7 @@ typedef struct connection_parameters {
 } conn_param_s;
 
 
+
 class Connection
 {
 private:
@@ -49,7 +54,7 @@ private:
 	void start_server();
 	void start_client();
 	void* get_in_addr(struct sockaddr *sa);
-	get_iface_addr(void);
+	// void get_iface_addr(void);
 	void receiver();
 	void m_sender();
 	
