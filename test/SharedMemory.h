@@ -1,6 +1,5 @@
-#ifndef SHMEMORY_H
-#define SHMEMORY_H
-
+#ifndef SHAREDMEMORY_H
+#define SHAREDMEMORY_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -11,30 +10,32 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#define KEY 1234565
-
-
 typedef struct packet {
 	int done;
 	int seq;
 	char msgbuf[64];
 } packet_s;
 
+template <typename T>
+class SharedMemory{
+
+private:
+size_t mBuffsize;
+key_t mKey = 123456789;
+
 size_t get_shm_size(){
-	return sizeof(packet_s)*10;
+	return sizeof(T)*mBuffsize;
 } 
-//fix the variable name from shmsize to function call
 
 key_t get_key(){
-	return KEY;
+	return mKey;
 }
 
 int get_id_new(){
 	int shmid;
 	key_t key = get_key();
 	if((shmid = shmget(key,get_shm_size(),IPC_CREAT | 0666)) <0){
- 		perror("shmid");
- 		exit(0);
+ 		perror("shmget");
  	}
  	return shmid;
 }
@@ -44,33 +45,40 @@ int get_id(){
 	key_t key = get_key();
 	if((shmid = shmget(key,get_shm_size(),0666)) <0){
  		perror("shmget");
- 		exit(0);
  	}
  	return shmid;
 }
+public:
 
-packet_s* create_shared_memory(){
+SharedMemory(size_t buffsize){
+	mBuffsize = buffsize;
+}
+
+T* create_shared_memory(){
 
 	int shmid = get_id_new();
-	packet_s *shm;
+	T *shm;
 	
-    if ((shm = (packet_s*) shmat(shmid, NULL, 0)) == (packet_s *) -1) {
+    if ((shm = (T*)shmat(shmid, NULL, 0)) == (T *) -1) {
         perror("shmat");
-        exit(0);
     }
     return shm;
 }
 
-packet_s* get_shared_memory(){
+T* get_shared_memory(){
 
 	int shmid = get_id();
-	packet_s *shm;
+	T *shm;
 	
-    if ((shm = (packet_s*) shmat(shmid, NULL, 0)) == (packet_s *) -1) {
+    if ((shm = (T*)shmat(shmid, NULL, 0)) == (T *) -1) {
         perror("shmat");
-        exit(0);
     }
     return shm;
 }
 
-#endif /* SHMEMORY_H */
+};
+
+
+
+
+#endif /* SHAREDMEMORY_H*/
