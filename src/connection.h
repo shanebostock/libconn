@@ -23,7 +23,8 @@
 
 #define MAXBUFLEN 1024
 #define PORT "4750"
-#define IP "10.0.0.181"
+//#define IP "10.0.0.181"
+#define IP "127.0.0.1"
 
 typedef enum conn_type {
 	CONN_TYPE_RECEIVER_E = 0,

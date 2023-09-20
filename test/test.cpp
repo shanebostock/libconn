@@ -101,20 +101,20 @@ int main (int argc, char* argv[]){
 
 	status_e rv;
 	const char* name = "Shane";
-	int shm_fd = 0;
-	void* ptr = get_memory(shm_fd, name);
-	const char* msg1 = "Hello";
-	const char* msg2 = "my name is";
-	const char* msg3 = "Computer";
-	msg_s* pmsg = ptr;
-	for (int i = 0; i<3; i++){
-		msg_s msg;
-		memset(msg.msg,msg1,sizeof(msg1));
-		msg.freshness = 1;
-		memset(pmsg,msg,sizeof(msg));
-		psmg++;
-	}
-	shm_unlink(name);
+	// int shm_fd = 0;
+	// void* ptr = get_memory(shm_fd, name);
+	// const char* msg1 = "Hello";
+	// const char* msg2 = "my name is";
+	// const char* msg3 = "Computer";
+	// msg_s* pmsg = ptr;
+	// for (int i = 0; i<3; i++){
+	// 	msg_s msg;
+	// 	memset(msg.msg,msg1,sizeof(msg1));
+	// 	msg.freshness = 1;
+	// 	memset(pmsg,msg,sizeof(msg));
+	// 	psmg++;
+	// }
+	// shm_unlink(name);
 	conn_param_s recv_params;
 	conn_param_s send_params;
 
