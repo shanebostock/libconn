@@ -1,51 +1,37 @@
 #include "connection.h"
 
 /* Public */
-Connection::Connection(const conn_param_s &params){
-	
-    m_params = params;
-    if(m_params.port[0] == '\0'){
-        // printf("Port is null using default value %d\n", atoi(PORT));
-        long unsigned int ret = snprintf(m_params.port,sizeof(m_params.port),"%s",PORT);
-        if(ret > sizeof(m_params.port)){
-            printf("Truncated\n");
-        }
-    } 
-    if(m_params.node[0] == '\0'){
-        // do nothing for now
-        // printf("Node is null getting My Local IP\n");
-        // set_my_node();
-    }
-
-    startconnection();
-
-}
-
-Connection::Connection(const Connection &con){
-    
-    this->m_params = con.m_params;
-    this->m_sockfd = con.m_sockfd;
-}
+Connection::Connection(){}
 
 Connection::~Connection(){
     
-    close(m_sockfd);
-    freeaddrinfo(m_servinfo);
+    if(m_sockfd != 0){
+        close(m_sockfd);
+        freeaddrinfo(m_servinfo);
+    }
+
 
 }
 
-status_e Connection::startconnection(){
+status_e Connection::startconnection(const conn_param_s &params){
 
-    if (m_params.type == CONN_TYPE_RECEIVER_E){
-        printf("I am a recevier.\n");
-        printf("Listening on port: %s\n", m_params.port);
-        // printf("My IP is: %s\n", m_params.node);
+    if (params.type == CONN_TYPE_SERVER_E){
+        m_lparams = params;
+
+        printf("I am a server.\n");
+        printf("Listening on port: %s\n", m_lparams.port);
+        printf("My IP is: %s\n", m_lparams.node);
+        
         start_server();
+        t_listen(listen);
+        return STATUS_OK_E;
     }
-    else if (m_params.type == CONN_TYPE_SENDER_E){
-        printf("I am a sender.\n"); 
-        printf("Connecting to port: %s.\n", m_params.port);
-        printf("At IP: %s\n", m_params.node);
+    else if (params.type == CONN_TYPE_CLIENT_E){
+        m_tparams = params;
+        printf("I am a client.\n"); 
+        printf("Connecting to port: %s.\n", m_tparams.port);
+        printf("At IP: %s\n", m_tparams.node);
+        return STATUS_OK_E;
         start_client();
     }
     else {
@@ -67,7 +53,7 @@ void Connection::start_server(){
     hints.ai_socktype = SOCK_DGRAM; // Options are SOCK_DGRAM or SOCK_STREAM
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, m_params.port, &hints, &m_servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, m_lparams.port, &hints, &m_servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(0);
     }
@@ -96,7 +82,7 @@ void Connection::start_server(){
         exit(1);
     }
 
-    receiver();
+    //listen();
 
 }
 
@@ -111,7 +97,7 @@ void Connection::start_client(){
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
 
-    if ((rv = getaddrinfo(m_params.node, m_params.port, &hints, &m_servinfo)) != 0) {
+    if ((rv = getaddrinfo(m_tparams.node, m_tparams.port, &hints, &m_servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(0);
     }
@@ -143,7 +129,7 @@ void Connection::start_client(){
     
 }
 
-void Connection::receiver(){
+void Connection::listen(){
     int numbytes;
     socklen_t addr_len;
     char s[INET_ADDRSTRLEN];
@@ -171,7 +157,7 @@ void Connection::receiver(){
     //close(m_sockfd);
 }
 
-void Connection::sender(){
+void Connection::talk(){
 
     int numbytes;
     printf("Message to Send: ");
@@ -183,14 +169,14 @@ void Connection::sender(){
     }
 }
 
-void Connection::sender(char* msgbuf){
+// void Connection::sender(char* msgbuf){
 
-    int numbytes;
-    if ((numbytes = sendto(m_sockfd, msgbuf, MAXBUFLEN-1, 0, m_p->ai_addr, m_p->ai_addrlen)) == -1) {
-        perror("client: sendto");
-        exit(1);
-    }
-}
+//     int numbytes;
+//     if ((numbytes = sendto(m_sockfd, msgbuf, MAXBUFLEN-1, 0, m_p->ai_addr, m_p->ai_addrlen)) == -1) {
+//         perror("client: sendto");
+//         exit(1);
+//     }
+// }
 
 // Helper methods
 void* Connection::get_in_addr(struct sockaddr *sa){
@@ -200,6 +186,7 @@ void* Connection::get_in_addr(struct sockaddr *sa){
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
+
 /*
 void Connection::get_iface_addr(void){
     char          buf[1024];

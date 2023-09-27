@@ -5,7 +5,7 @@ echo Compiling libconn
 
 LIBCONN_PATH=./src
 
-g++ -c -Wall -Werror -fpic $LIBCONN_PATH/connection.cpp 
-g++ -shared -o libconn.so connection.o
+gcc -c -Wall -Werror -fpic $LIBCONN_PATH/helperfuncs.c $LIBCONN_PATH/listener.c $LIBCONN_PATH/talker.c
+gcc -shared -o libconn.so helperfuncs.o listener.o talker.o
 
 echo complete
