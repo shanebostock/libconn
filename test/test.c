@@ -81,9 +81,30 @@ void test_libconn(){
 }
 
 int main (int argc, char* argv[]){
+	
+	// char buf[MAXBUFLEN];
+	// char* p_buf = buf;
+	// get_msg(p_buf);
+	pthread_t t_listener, t_talker;
+	int t_talkrv, t_listenrv;
+	// printf("msg: %s\n",p_buf);
+	char* msg = "Hello World";
 
+	// test_libconn();
+	
+	if (argc ==2) listener();
+	else talker(msg);
+	
 
-	test_libconn();
+	t_listenrv = pthread_create(&t_listener, NULL, (void*)listener, NULL);
+	t_talkrv = pthread_create(&t_talker, NULL, (void*)talker, (void*)msg);
+	
+	if(!t_listenrv || !t_talkrv){
+		printf("Thread good!\n");
+	}
+
+	pthread_join(t_listener, NULL);
+	pthread_join(t_talker, NULL);
 	
 	printf("Exiting Nice.\n");
 

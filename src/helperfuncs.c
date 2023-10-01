@@ -7,6 +7,12 @@ status_e linker_test_func(int32_t num){
 
 }
 
+void get_msg(char* pbuf){
+
+    printf("Message to Send: ");
+    fgets (pbuf, MAXBUFLEN, stdin);
+
+}
 
 void *get_in_addr(struct sockaddr *sa)
 {

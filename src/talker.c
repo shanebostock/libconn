@@ -1,21 +1,27 @@
 #include "connection.h"
 
-int32_t talker(int argc, char* argv[]){
+int32_t talker(char* msg){
+    
+    char* serverport = SERVERPORT;
+    char* hostname = SERVER;
+    // char* msg = (char*)_msg;
+
+
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
     int numbytes;
 
-    if (argc != 3) {
-        fprintf(stderr,"usage: talker hostname message\n");
-        exit(1);
-    }
+    // if (argc != 3) {
+    //     fprintf(stderr,"usage: talker hostname message\n");
+    //     exit(1);
+    // }
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // set to AF_INET to use IPv4
     hints.ai_socktype = SOCK_DGRAM;
 
-    if ((rv = getaddrinfo(argv[1], SERVERPORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(hostname, serverport, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -36,7 +42,7 @@ int32_t talker(int argc, char* argv[]){
         return 2;
     }
 
-    if ((numbytes = sendto(sockfd, argv[2], strlen(argv[2]), 0,
+    if ((numbytes = sendto(sockfd, msg, strlen(msg), 0,
              p->ai_addr, p->ai_addrlen)) == -1) {
         perror("talker: sendto");
         exit(1);
@@ -44,7 +50,7 @@ int32_t talker(int argc, char* argv[]){
 
     freeaddrinfo(servinfo);
 
-    printf("talker: sent %d bytes to %s\n", numbytes, argv[1]);
+    printf("talker: sent %d bytes to %s\n", numbytes, hostname);
     close(sockfd);
     return 0;
 

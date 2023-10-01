@@ -1,6 +1,9 @@
 #include "connection.h"
 
 int32_t listener(){
+
+	char* myport = MYPORT;
+
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
@@ -15,7 +18,7 @@ int32_t listener(){
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, MYPORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, myport, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
