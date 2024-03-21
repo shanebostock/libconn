@@ -2,8 +2,8 @@
 
 int32_t default_talker(char* msg){
     
-    char* serverport = DEFAULT_SERVERPORT;
-    char* hostname = DEFAULT_SERVER;
+    const char* serverport = DEFAULT_SERVERPORT;
+    const char* hostname = DEFAULT_SERVER;
     // char* msg = (char*)_msg;
 
 
@@ -62,8 +62,8 @@ int32_t default_talker(char* msg){
 
 int32_t talker(conn_params_s *params){
     
-    char* serverport = params->serverport;
-    char* hostname = DEFAULT_SERVER;
+    const char* serverport = params->serverport;
+    const char* hostname = DEFAULT_SERVER;
     char buf[MAXBUFLEN];
 	char* pbuf = buf;
 	//get_msg(p_buf);

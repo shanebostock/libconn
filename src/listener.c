@@ -2,7 +2,7 @@
 
 int32_t default_listener(){
 
-	char* myport = DEFAULT_MYPORT;
+	const char* myport = DEFAULT_MYPORT;
 
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
@@ -76,7 +76,7 @@ int32_t default_listener(){
 
 int32_t listener(conn_params_s *params){
 
-	char* myport = params->myport;
+	const char* myport = params->myport;
 
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
